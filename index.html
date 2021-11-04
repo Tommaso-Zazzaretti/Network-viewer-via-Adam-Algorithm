@@ -1,0 +1,77 @@
+<html>
+	<head>
+		<title></title>
+        <script type="text/javascript" src="d3.min.js"></script>
+        <script type="text/javascript" src="js/node.js"></script>
+        <script type="text/javascript" src="js/edge.js"></script>
+        <script type="text/javascript" src="js/header.js"></script>
+        <script type="text/javascript" src="js/graph.js"></script>
+        <script type="text/javascript" src="js/optimizer.js"></script>
+        <script type="text/javascript" src="js/examples.js"></script>
+        <meta charset="utf-8" />
+        <style>
+        	body{margin:0px;padding:0px;width:100%;height:100%;}
+        	#leftContainer {float:left;height:100%;width:100%;margin:0;padding:0;}
+        	#rightContainer{float:left;height:100%;width:0%;margin:0;padding:0;}
+        	#svgBox{background-color:#301200;height:100%;width:100%;margin:0;padding:0;}
+        </style>
+	</head>
+	<body>
+		<div id="leftContainer">
+			<div id="svgBox"></div>
+		</div>
+		<div id="rightContainer">
+		</div>
+		<div style="clear:both"></div>
+	</body>
+	<script type="text/javascript">
+		//Larghezza e altezza del svg principale 
+		let WIDTH  = document.getElementById("svgBox").offsetWidth;
+		let HEIGHT = document.getElementById("svgBox").offsetHeight;
+
+		//--------------------------Inizializzo l'elemento svg principale che conterrà il grafico-------------
+		const svg = d3.select("#svgBox")
+					.append("svg")
+					.attr("id","graphBox")
+					.attr("height",HEIGHT)
+					.attr("width" ,WIDTH)
+					.call(d3.zoom().on("zoom", function(){ svg.attr("transform", d3.event.transform) }))
+					.append("g");
+
+		function updateWindow(){
+		   	let WIDTH  = document.getElementById("svgBox").offsetWidth;
+			let HEIGHT  = document.getElementById("svgBox").offsetHeight;
+		    d3.select("#graphBox").attr("width", WIDTH).attr("height", HEIGHT);
+		}
+		d3.select(window).on('resize.updatesvg', updateWindow);
+		//----------------------------------------------------------------------------------------------------
+
+
+
+		//Definizione della struttura topologica della rete:
+		let V = EXAMPLE2.V; //Nodes
+		let E = EXAMPLE2.E; //Edges
+		let name = "InputGraph"
+		let network = new Graph(V,E,name,svg,WIDTH,HEIGHT);
+		network.toString("orange");  //Stampato in console!
+		//Creazione del disegno svg della rete
+		network.draw();
+		//Creazione ottimizzatore associato alla rete
+		let optimizer = new Optimizer(network, 0, network.V.length, VISUAL_CRITERIA, HYPER_PARAMETERS)
+		//Esecuzione algoritmo automatico per il posizionamento dei nodi
+		optimizeGraphAnimation();
+		function optimizeGraphAnimation(){
+			let iteration_count = 0;
+			let timer = setInterval(
+				function(){ 
+					optimizer.updateNodesPosition(iteration_count);  //[1] Update nodes position		
+					network.updateDrawing();                         //[2] Update svg drawing
+					iteration_count+=1;
+					if(iteration_count%200 == 0){ optimizer.printLosses(iteration_count); }
+					if(iteration_count>=MAX_ITERATION_NUM){	clearInterval(timer); }
+				}
+			,FRAME_MSEC);
+		}
+
+	</script>
+</html>
